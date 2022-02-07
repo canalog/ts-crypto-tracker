@@ -1,6 +1,6 @@
 import Router from "./Router";
 import { createGlobalStyle } from "styled-components";
-import { create } from "domain";
+import { ReactQueryDevtools } from "react-query/devtools";
 
 const GlobalStyle = createGlobalStyle`
 html, body, div, span, applet, object, iframe,
@@ -71,6 +71,7 @@ const App = () => {
     <>
       <GlobalStyle />
       <Router />
+      <ReactQueryDevtools initialIsOpen={true} />
     </>
   );
 };

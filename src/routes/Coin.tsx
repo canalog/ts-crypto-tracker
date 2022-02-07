@@ -1,21 +1,41 @@
+// https://github.com/MangoSteen0903/react-practice-cryptocoin/tree/master/crypto-tracker/src
 import { useEffect, useState } from "react";
-import { Routes, Route, useLocation, useParams } from "react-router-dom";
+import { useQuery } from "react-query";
+import { Helmet, HelmetProvider } from "react-helmet-async";
+import {
+  Routes,
+  Route,
+  useLocation,
+  useParams,
+  useMatch,
+  Link,
+} from "react-router-dom";
 import styled from "styled-components";
+import { fetchCoinInfo, fetchCoinTickers } from "../api";
 import Chart from "./Chart";
 import Price from "./Price";
 
 const Container = styled.div`
   padding: 0px 20px;
-  max-width: 480px;
+  max-width: 600px;
   margin: 0 auto;
 `;
 
 const Header = styled.header`
   height: 15vh;
   display: flex;
-  justify-content: center;
+  justify-content: space-between;
   align-items: center;
-  margin: 20px;
+  margin: 20px 0;
+`;
+
+const Button = styled.button`
+  width: 30px;
+  height: 30px;
+  border: 1px solid ${(props) => props.theme.textColor};
+  border-radius: 30px;
+  background-color: transparent;
+  color: ${(props) => props.theme.textColor};
 `;
 
 const Title = styled.h1`
@@ -53,13 +73,35 @@ const OverviewItem = styled.div`
 const Description = styled.p`
   margin: 20px 0;
 `;
+
+const Tabs = styled.div`
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  margin: 25px 0;
+  gap: 10px;
+`;
+
+const Tab = styled.span<{ isActive: boolean }>`
+  text-align: center;
+  text-transform: uppercase;
+  font-size: 12px;
+  font-weight: 400;
+  background-color: rgba(0, 0, 0, 0.5);
+  padding: 7px 0;
+  border-radius: 10px;
+  color: ${(props) =>
+    props.isActive ? props.theme.accentColor : props.theme.textColor};
+  a {
+    display: block;
+  }
+`;
 interface RouterState {
   state: {
     name: string;
   };
 }
 
-interface InfoData {
+interface IInfoData {
   id: string;
   name: string;
   symbol: string;
@@ -82,7 +124,7 @@ interface InfoData {
   last_data_at: string;
 }
 
-interface PriceData {
+interface ITickersData {
   id: string;
   name: string;
   symbol: string;
@@ -115,10 +157,24 @@ interface PriceData {
     };
   };
 }
+
 const Coin = () => {
-  const [loading, setLoading] = useState(true);
   const { coinId } = useParams();
   const { state } = useLocation() as RouterState;
+  const priceMatch = useMatch("/:coinId/price");
+  const chartMatch = useMatch("/:coinId/chart");
+  const { isLoading: infoLoading, data: infoData } = useQuery<IInfoData>(
+    ["info", coinId!],
+    () => fetchCoinInfo(coinId!)
+  );
+  const { isLoading: tickersLoading, data: tickersData } =
+    useQuery<ITickersData>(
+      ["tickers", coinId!],
+      () => fetchCoinTickers(coinId!),
+      { refetchInterval: 5000 }
+    );
+  const loading = infoLoading || tickersLoading;
+  /* const [loading, setLoading] = useState(true);
   const [info, setInfo] = useState<InfoData>();
   const [priceInfo, setPriceInfo] = useState<PriceData>();
   useEffect(() => {
@@ -133,48 +189,69 @@ const Coin = () => {
       setPriceInfo(priceData);
       setLoading(false);
     })();
-  }, [coinId]);
+  }, [coinId]); */
   return (
-    <Container>
-      <Header>
-        <Title>{state?.name ? state.name : loading? "Loading..." : info?.name}</Title>
-      </Header>
-      {loading ? (
-        <Loader>Loading...</Loader>
-      ) : (
-        <>
-          <Overview>
-            <OverviewItem>
-              <span>Rank:</span>
-              <span>{info?.rank}</span>
-            </OverviewItem>
-            <OverviewItem>
-              <span>Symbol:</span>
-              <span>${info?.symbol}</span>
-            </OverviewItem>
-            <OverviewItem>
-              <span>Open Source:</span>
-              <span>{info?.open_source ? "YES" : "NO"}</span>
-            </OverviewItem>
-          </Overview>
-          <Description>{info?.description}</Description>
-          <Overview>
-            <OverviewItem>
-              <span>Total Supply:</span>
-              <span>{priceInfo?.total_supply}</span>
-            </OverviewItem>
-            <OverviewItem>
-              <span>Max Supply:</span>
-              <span>${priceInfo?.max_supply}</span>
-            </OverviewItem>
-          </Overview>
-          <Routes>
-            <Route path="price" element={<Price />} />
-            <Route path="chart" element={<Chart />} />
-          </Routes>
-        </>
-      )}
-    </Container>
+    <HelmetProvider>
+      <Container>
+        <Helmet>
+          <title>
+            {state?.name ? state.name : loading ? "Loading..." : infoData?.name}
+          </title>
+        </Helmet>
+        <Header>
+          <Button>
+            <Link to="/">&larr;</Link>
+          </Button>
+          <Title>
+            {state?.name ? state.name : loading ? "Loading..." : infoData?.name}
+          </Title>
+        </Header>
+        {loading ? (
+          <Loader>Loading...</Loader>
+        ) : (
+          <>
+            <Overview>
+              <OverviewItem>
+                <span>Rank:</span>
+                <span>{infoData?.rank}</span>
+              </OverviewItem>
+              <OverviewItem>
+                <span>Symbol:</span>
+                <span>${infoData?.symbol}</span>
+              </OverviewItem>
+              <OverviewItem>
+                <span>Price:</span>
+                <span>{tickersData?.quotes.USD.price.toFixed(3)}</span>
+              </OverviewItem>
+            </Overview>
+            <Description>{infoData?.description}</Description>
+            <Overview>
+              <OverviewItem>
+                <span>Total Supply:</span>
+                <span>{tickersData?.total_supply}</span>
+              </OverviewItem>
+              <OverviewItem>
+                <span>Max Supply:</span>
+                <span>${tickersData?.max_supply}</span>
+              </OverviewItem>
+            </Overview>
+
+            <Tabs>
+              <Tab isActive={chartMatch !== null}>
+                <Link to={`/${coinId}/chart`}>Chart</Link>
+              </Tab>
+              <Tab isActive={priceMatch !== null}>
+                <Link to={`/${coinId}/price`}>Price</Link>
+              </Tab>
+            </Tabs>
+            <Routes>
+              <Route path="chart" element={<Chart coinId={coinId!} />} />
+              <Route path="price" element={<Price />} />
+            </Routes>
+          </>
+        )}
+      </Container>
+    </HelmetProvider>
   );
 };
 

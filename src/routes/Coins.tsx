@@ -1,10 +1,12 @@
 import { useEffect, useState } from "react";
+import { Helmet, HelmetProvider } from "react-helmet-async";
+import { useQuery } from "react-query";
 import { Link } from "react-router-dom";
 import styled from "styled-components";
+import { fetchCoins } from "../api";
 
 const Container = styled.div`
-  padding: 0px 20px;
-  max-width: 480px;
+  max-width: 600px;
   margin: 0 auto;
 `;
 
@@ -16,10 +18,17 @@ const Header = styled.header`
   margin: 20px;
 `;
 
-const CoinsList = styled.ul``;
+const CoinsList = styled.ul`
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  column-gap: 10px;
+  width: 580px;
+  margin-left: 10px;
+`;
 
 const Coin = styled.li`
   background-color: white;
+  /* width: 280px; */
   color: ${(props) => props.theme.bgColor};
   margin-bottom: 10px;
   border-radius: 15px;
@@ -41,6 +50,7 @@ const Title = styled.h1`
   font-size: 48px;
   color: ${(props) => props.theme.accentColor};
   font-weight: 600;
+  text-transform: uppercase;
 `;
 
 const Loader = styled.span`
@@ -53,7 +63,8 @@ const Img = styled.img`
   height: 35px;
   margin-right: 10px;
 `;
-interface CoinInterface {
+
+interface ICoin {
   id: string;
   name: string;
   symbol: string;
@@ -64,7 +75,8 @@ interface CoinInterface {
 }
 
 const Coins = () => {
-  const [coins, setCoins] = useState<CoinInterface[]>([]);
+  const { isLoading, data } = useQuery<ICoin[]>("allCoins", fetchCoins);
+  /* const [coins, setCoins] = useState<CoinInterface[]>([]);
   const [loading, setLoading] = useState(true);
   useEffect(() => {
     (async () => {
@@ -73,29 +85,36 @@ const Coins = () => {
       setCoins(json.slice(0, 100));
       setLoading(false);
     })();
-  }, []);
+  }, []); */
   return (
-    <Container>
-      <Header>
-        <Title>COIN</Title>
-      </Header>
-      {loading ? (
-        <Loader>Loading...</Loader>
-      ) : (
-        <CoinsList>
-          {coins.map((coin) => (
-            <Coin key={coin.id}>
-              <Link to={`/${coin.id}`} state={{ name: coin.name }}>
-                <Img
-                  src={`https://cryptoicon-api.vercel.app/api/icon/${coin.symbol.toLowerCase()}`}
-                />
-                {coin.name} &rarr;{" "}
-              </Link>
-            </Coin>
-          ))}
-        </CoinsList>
-      )}
-    </Container>
+    <HelmetProvider>
+      <Container>
+        <Helmet>
+          {" "}
+          {/* Change the head of the document */}
+          <title>Crypto Tracker</title>
+        </Helmet>
+        <Header>
+          <Title>Crypto Tracker</Title>
+        </Header>
+        {isLoading ? (
+          <Loader>Loading...</Loader>
+        ) : (
+          <CoinsList>
+            {data?.slice(0, 100).map((coin) => (
+              <Coin key={coin.id}>
+                <Link to={`/${coin.id}`} state={{ name: coin.name }}>
+                  <Img
+                    src={`https://cryptoicon-api.vercel.app/api/icon/${coin.symbol.toLowerCase()}`}
+                  />
+                  {coin.name} &rarr;{" "}
+                </Link>
+              </Coin>
+            ))}
+          </CoinsList>
+        )}
+      </Container>
+    </HelmetProvider>
   );
 };
 
