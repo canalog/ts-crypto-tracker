@@ -2,8 +2,10 @@ import { useEffect, useState } from "react";
 import { Helmet, HelmetProvider } from "react-helmet-async";
 import { useQuery } from "react-query";
 import { Link } from "react-router-dom";
+import { useSetRecoilState } from "recoil";
 import styled from "styled-components";
 import { fetchCoins } from "../api";
+import { isDarkAtom } from "../atoms";
 
 const Container = styled.div`
   max-width: 600px;
@@ -27,9 +29,9 @@ const CoinsList = styled.ul`
 `;
 
 const Coin = styled.li`
-  background-color: white;
+  background-color: ${(props) => props.theme.textColor1};
   /* width: 280px; */
-  color: ${(props) => props.theme.bgColor};
+  color: ${(props) => props.theme.textColor2};
   margin-bottom: 10px;
   border-radius: 15px;
   a {
@@ -73,8 +75,11 @@ interface ICoin {
   is_active: boolean;
   type: string;
 }
+interface ICoinsProps {}
 
-const Coins = () => {
+const Coins = ({}: ICoinsProps) => {
+  const setDarkAtom = useSetRecoilState(isDarkAtom);
+  const toggleDarkAtom = () => setDarkAtom((prev) => !prev);
   const { isLoading, data } = useQuery<ICoin[]>("allCoins", fetchCoins);
   /* const [coins, setCoins] = useState<CoinInterface[]>([]);
   const [loading, setLoading] = useState(true);
@@ -96,6 +101,7 @@ const Coins = () => {
         </Helmet>
         <Header>
           <Title>Crypto Tracker</Title>
+          <button onClick={toggleDarkAtom}>Toggle Mode</button>
         </Header>
         {isLoading ? (
           <Loader>Loading...</Loader>

@@ -32,10 +32,10 @@ const Header = styled.header`
 const Button = styled.button`
   width: 30px;
   height: 30px;
-  border: 1px solid ${(props) => props.theme.textColor};
+  border: 1px solid ${(props) => props.theme.textColor1};
   border-radius: 30px;
   background-color: transparent;
-  color: ${(props) => props.theme.textColor};
+  color: ${(props) => props.theme.textColor1};
 `;
 
 const Title = styled.h1`
@@ -90,7 +90,7 @@ const Tab = styled.span<{ isActive: boolean }>`
   padding: 7px 0;
   border-radius: 10px;
   color: ${(props) =>
-    props.isActive ? props.theme.accentColor : props.theme.textColor};
+    props.isActive ? props.theme.accentColor : props.theme.textColor1};
   a {
     display: block;
   }
